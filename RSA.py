@@ -1,2 +1,2 @@
 print("This is a test")
-Print("Hi Baby! :)")
+print("Hi Baby! :)")
