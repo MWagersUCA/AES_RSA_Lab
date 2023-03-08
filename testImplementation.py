@@ -2,29 +2,61 @@ import math
 import random
 import hashlib
 import time
+import base64
+import json
+from Crypto.Cipher import AES
+from Crypto.PublicKey import RSA
+
 
 # AES encryption and decryption functions
 def aes_encrypt(plaintext, key):
     # implementation of AES encryption
-    pass
+    cipher = AES.new(key, AES.MODE_EAX)
+    ciphertext, tag = cipher.encrypt_and_digest(plaintext)
+    return (ciphertext, cipher.nonce, tag)
 
 def aes_decrypt(ciphertext, key):
     # implementation of AES decryption
-    pass
+    cipher = AES.new(key, AES.MODE_EAX, nonce=ciphertext[1])
+    decryptedtext = cipher.decrypt_and_verify(ciphertext[0], ciphertext[2])
+    return decryptedtext
 
 # RSA encryption and decryption functions
 def rsa_encrypt(plaintext, public_key):
     # implementation of RSA encryption
-    pass
-
+    #rsa_key = RSA.construct((public_key[1], public_key[0]))
+    #ciphertext = rsa_key.encrypt(plaintext, None)
+    #return ciphertext
+    n, e = public_key
+    # Convert plaintext to an integer
+    plaintext_int = int.from_bytes(plaintext, byteorder='big')
+    # Compute the ciphertext as an integer
+    ciphertext_int = pow(plaintext_int, e, n)
+    # Convert the ciphertext back to a bytearray
+    ciphertext = ciphertext_int.to_bytes((ciphertext_int.bit_length() + 7) // 8, byteorder='big')
+    return ciphertext
+ 
 def rsa_decrypt(ciphertext, private_key):
     # implementation of RSA decryption
-    pass
+    #rsa_key = RSA.import_key(private_key)
+    #decryptedtext = rsa_key.decrypt(ciphertext)
+    #return decryptedtext
+    
+    # Convert the private key tuple to a string
+    private_key_str = ''.join([chr(b) for b in private_key])
+    
+    # Import the private key
+    rsa_key = RSA.import_key(private_key_str)
+
+    # Decrypt the ciphertext
+    plaintext = rsa_key.decrypt(ciphertext)
+
+    return plaintext
 
 # function to generate random plaintext
 def generate_plaintext():
     # implementation to generate plaintext
-    pass
+    return bytearray(random.getrandbits(8) for _ in range(16))
 
 # function to generate AES key
 def generate_aes_key(key_size):
@@ -51,17 +83,40 @@ def generate_prime(bits):
             return p
         
 # function to check if a number is prime
-def is_prime(n):
-    if n <= 3:
-        return n > 1
+def is_prime(n, k=5):
+    if n <= 1:
+        return False
+    elif n <= 3:
+        return True
     elif n % 2 == 0 or n % 3 == 0:
         return False
-    i = 5
-    while i * i <= n:
-        if n % i == 0 or n % (i + 2) == 0:
-            return False
-        i += 6
-    return True        
+    else:
+        r, s = 0, n-1
+        while s % 2 == 0:
+            r += 1
+            s //= 2
+        for _ in range(k):
+            a = random.randrange(2, n-1)
+            x = pow(a, s, n)
+            if x == 1 or x == n-1:
+                continue
+            for _ in range(r-1):
+                x = pow(x, 2, n)
+                if x == n-1:
+                    break
+            else:
+                return False
+        return True
+#    if n <= 3:
+#        return n > 1
+#    elif n % 2 == 0 or n % 3 == 0:
+#       return False
+#    i = 5
+#    while i * i <= n:
+#        if n % i == 0 or n % (i + 2) == 0:
+#            return False
+#        i += 6
+#    return True        
 
 # function to perform pattern analysis
 def pattern_analysis():
